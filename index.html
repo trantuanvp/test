@@ -458,8 +458,8 @@
             <div class="container mx-auto max-w-7xl">
                 <h2 class="font-cursive text-4xl sm:text-5xl md:text-7xl text-rose-500 dark:text-indigo-400 text-center mb-10 md:mb-16 gradient-text leading-tight" data-anim="reveal">Khoảnh Khắc Đáng Nhớ</h2>
                 
-                <!-- Sử dụng CSS Masonry thay vì Grid JS phức tạp -->
-                <div id="dynamic-gallery-container" class="columns-2 md:columns-4 gap-3 sm:gap-4 md:gap-6 w-full">
+                <!-- Kết hợp: Điện thoại dùng Grid, Máy tính dùng CSS Masonry -->
+                <div id="dynamic-gallery-container" class="grid grid-cols-2 gap-3 sm:gap-4 md:block md:columns-4 md:gap-6 w-full">
                     <!-- Ảnh sẽ được thêm tự động vào đây -->
                 </div>
 
@@ -578,7 +578,7 @@
         ]
     };
 
-    // Hàm tự động tạo HTML cho Gallery dùng CSS Masonry
+    // Hàm tự động tạo HTML cho Gallery kết hợp Grid/Masonry
     function buildDynamicGallery() {
         const container = document.getElementById('dynamic-gallery-container');
         if (!container) return;
@@ -598,10 +598,11 @@
         }
 
         imagesData.forEach((item) => {
-            // Sử dụng break-inside-avoid và mb-x để tạo khoảng cách trong Masonry CSS
+            // Điện thoại (Mobile): Cố định chiều cao (h-48) cắt gọn gàng theo grid
+            // Máy tính (Desktop): Trả về chiều cao tự động (md:h-auto) không cắt xén, xếp gạch Masonry (md:mb-6 md:break-inside-avoid)
             const imgHTML = `
-                <div class="reveal-wrapper break-inside-avoid mb-3 sm:mb-4 md:mb-6 relative rounded-2xl overflow-hidden pink-shadow tilt-elem">
-                    <img src="${item.src}" loading="lazy" alt="Gallery Image" class="gallery-img w-full h-auto object-cover block">
+                <div class="reveal-wrapper relative rounded-2xl overflow-hidden pink-shadow tilt-elem h-48 sm:h-56 md:h-auto md:break-inside-avoid md:mb-6">
+                    <img src="${item.src}" loading="lazy" alt="Gallery Image" class="gallery-img w-full h-full md:h-auto object-cover block">
                     <div class="gallery-caption text-center">
                         <p class="text-white font-cursive text-lg sm:text-xl md:text-3xl drop-shadow-lg">${item.caption}</p>
                     </div>
@@ -765,7 +766,6 @@
                         }
                     );
                 });
-                // Đã xóa phần JS đẩy trượt cột thủ công gây lỗi khoảng trắng
             } else {
                 gsap.fromTo('.gallery-img', 
                     { opacity: 0, scale: 1.05 }, 
@@ -856,7 +856,10 @@
         }
 
         function loadWishesFromSheet() {
-            fetch(scriptURL)
+            // Thêm tham số thời gian để chống cache, ép trình duyệt luôn tải dữ liệu mới nhất
+            const noCacheURL = scriptURL + "?t=" + new Date().getTime();
+            
+            fetch(noCacheURL)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.wishes) {
@@ -891,7 +894,8 @@
         function processWishSubmit() {
             if (!pendingWish) return;
             
-            createWishBubble(pendingWish, true);
+            // Xóa dòng tạo bong bóng ngay lập tức để tránh hiểu lầm
+            // createWishBubble(pendingWish, true);
 
             const urlencoded = new URLSearchParams();
             urlencoded.append('wish', pendingWish); 
@@ -903,7 +907,12 @@
                 body: urlencoded,
                 mode: 'no-cors'
             })
-            .then(() => console.log('Đã gửi điều ước và IP lên Sheets thành công!'))
+            .then(() => {
+                console.log('Đã gửi điều ước và IP lên Sheets thành công!');
+                const oldPlaceholder = wishInput.placeholder;
+                wishInput.placeholder = "Đã gửi thành công! Chờ anh duyệt nhé ❤️";
+                setTimeout(() => { wishInput.placeholder = oldPlaceholder; }, 4000);
+            })
             .catch(error => console.error('Lỗi khi gửi dữ liệu lên Sheets:', error));
             
             wishInput.value = '';

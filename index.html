@@ -458,9 +458,9 @@
             <div class="container mx-auto max-w-7xl">
                 <h2 class="font-cursive text-4xl sm:text-5xl md:text-7xl text-rose-500 dark:text-indigo-400 text-center mb-10 md:mb-16 gradient-text leading-tight" data-anim="reveal">Khoảnh Khắc Đáng Nhớ</h2>
                 
-                <!-- Vùng chứa lưới gallery, JS sẽ tự động tạo các cột và nhét ảnh vào đây -->
-                <div id="dynamic-gallery-container" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 items-start">
-                    <!-- Ảnh sẽ được thêm tự động qua Script bên dưới -->
+                <!-- Sử dụng CSS Masonry thay vì Grid JS phức tạp -->
+                <div id="dynamic-gallery-container" class="columns-2 md:columns-4 gap-3 sm:gap-4 md:gap-6 w-full">
+                    <!-- Ảnh sẽ được thêm tự động vào đây -->
                 </div>
 
             </div>
@@ -568,7 +568,6 @@
         totalImages: 0,       // ĐIỀN TỔNG SỐ ẢNH VÀO ĐÂY (Vd: 50). NẾU ĐIỀN 0, WEB SẼ DÙNG CÁCH 2 Ở DƯỚI.
         
         // CÁCH 2: NẾU totalImages = 0, WEB SẼ TỰ ĐỘNG DÙNG DANH SÁCH DƯỚI ĐÂY
-        // Chỉ cần copy dòng cũ và dán tên ảnh mới vào là xong!
         customImages: [
             { src: 'mess.jpg', caption: 'Tình Yêu của tôi 💖' },
             { src: 'str1.jpg', caption: 'Rất hạnh phúc 😊' },
@@ -576,61 +575,40 @@
             { src: 'mess1.jpg', caption: 'Cute chưa kìa 😆' },
             { src: 'e.jpg', caption: 'Bé iu 😍' },
             { src: 'status.jpg', caption: 'Luôn bên nhau nhé ❤️' },
-            // Mẫu thêm ảnh mới: { src: 'ten_anh_cua_ban.jpg', caption: 'Chữ viết ở đây' },
         ]
     };
 
-    // Hàm tự động tạo HTML cho Gallery dựa trên cấu hình trên
+    // Hàm tự động tạo HTML cho Gallery dùng CSS Masonry
     function buildDynamicGallery() {
         const container = document.getElementById('dynamic-gallery-container');
         if (!container) return;
         
-        container.innerHTML = ''; // Xóa sạch dữ liệu cũ
+        container.innerHTML = ''; 
         let imagesData = [];
 
-        // Kiểm tra xem người dùng chọn Cách 1 hay Cách 2
         if (GALLERY_SETTINGS.totalImages > 0) {
-            // Tự động sinh mảng theo số lượng ảnh (1.jpg -> 50.jpg)
             for (let i = 1; i <= GALLERY_SETTINGS.totalImages; i++) {
                 imagesData.push({
                     src: `${GALLERY_SETTINGS.folderPath}${i}${GALLERY_SETTINGS.extension}`,
-                    caption: 'Kỷ niệm ❤️' // Mặc định chữ cho ảnh đánh số
+                    caption: 'Kỷ niệm ❤️' 
                 });
             }
         } else {
-            // Dùng danh sách custom
             imagesData = GALLERY_SETTINGS.customImages;
         }
 
-        // Tạo 4 cột lưới ảo (sẽ tự gộp thành 2 cột trên điện thoại nhờ CSS Tailwind)
-        const columns = Array.from({ length: 4 }, (_, i) => {
-            const col = document.createElement('div');
-            // Cột chẵn (1, 3) sẽ bị đẩy tụt xuống 1 chút tạo hiệu ứng ziczac (masonry)
-            let classes = 'gallery-col grid gap-3 sm:gap-4 md:gap-6 h-max';
-            if (i === 1 || i === 3) {
-                classes += ' mt-6 sm:mt-8 md:mt-24';
-            }
-            col.className = classes;
-            return col;
-        });
-
-        // Phân phát ảnh đều vào 4 cột
-        imagesData.forEach((item, index) => {
-            const colIndex = index % 4; // Chia lấy dư để xoay vòng: Cột 0 -> 1 -> 2 -> 3 -> 0...
-            
+        imagesData.forEach((item) => {
+            // Sử dụng break-inside-avoid và mb-x để tạo khoảng cách trong Masonry CSS
             const imgHTML = `
-                <div class="reveal-wrapper relative rounded-2xl overflow-hidden pink-shadow tilt-elem h-40 sm:h-48 md:h-auto">
-                    <img src="${item.src}" loading="lazy" alt="Gallery Image" class="gallery-img w-full h-full object-cover">
+                <div class="reveal-wrapper break-inside-avoid mb-3 sm:mb-4 md:mb-6 relative rounded-2xl overflow-hidden pink-shadow tilt-elem">
+                    <img src="${item.src}" loading="lazy" alt="Gallery Image" class="gallery-img w-full h-auto object-cover block">
                     <div class="gallery-caption text-center">
                         <p class="text-white font-cursive text-lg sm:text-xl md:text-3xl drop-shadow-lg">${item.caption}</p>
                     </div>
                 </div>
             `;
-            columns[colIndex].innerHTML += imgHTML;
+            container.innerHTML += imgHTML;
         });
-
-        // In 4 cột đã nhét đầy ảnh ra màn hình
-        columns.forEach(col => container.appendChild(col));
     }
     // =====================================================================
 
@@ -739,7 +717,7 @@
                     if (typeof setupCanvas === 'function') setupCanvas();
                     ScrollTrigger.refresh();
                     initPageAnimations();
-                    initGalleryInteractive(); // Kích hoạt sự kiện click ảnh sau khi load xong
+                    initGalleryInteractive(); 
                 }
             });
 
@@ -773,7 +751,7 @@
                 });
             });
 
-            // Gắn hiệu ứng GSAP cho Gallery động
+            // Hiệu ứng GSAP cho Gallery sử dụng CSS Masonry
             if (window.innerWidth >= 768) {
                 const revealWrappers = document.querySelectorAll('.reveal-wrapper');
                 revealWrappers.forEach(wrapper => {
@@ -787,15 +765,7 @@
                         }
                     );
                 });
-
-                gsap.to('.gallery-col:nth-child(odd)', {
-                    y: -60, ease: 'none',
-                    scrollTrigger: { trigger: '#gallery-section', start: 'top bottom', end: 'bottom top', scrub: true }
-                });
-                gsap.to('.gallery-col:nth-child(even)', {
-                    y: 60, ease: 'none',
-                    scrollTrigger: { trigger: '#gallery-section', start: 'top bottom', end: 'bottom top', scrub: true }
-                });
+                // Đã xóa phần JS đẩy trượt cột thủ công gây lỗi khoảng trắng
             } else {
                 gsap.fromTo('.gallery-img', 
                     { opacity: 0, scale: 1.05 }, 
@@ -803,7 +773,6 @@
                 );
             }
 
-            // Khởi tạo 3D Tilt cho Gallery mới (chỉ máy tính)
             if(window.matchMedia("(hover: hover)").matches) {
                 VanillaTilt.init(document.querySelectorAll(".tilt-elem"), { max: 10, speed: 400, glare: true, "max-glare": 0.3, scale: 1.02 });
             }
@@ -1105,14 +1074,25 @@
         const playlist = ['t.mp3', 't2.mp3']; 
         let currentTrackIndex = -1; 
 
+        // Hàm chọn bài ngẫu nhiên KHÔNG TRÙNG với bài đang phát
+        function getRandomTrack() {
+            if (playlist.length <= 1) return 0;
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * playlist.length);
+            } while (newIndex === currentTrackIndex);
+            return newIndex;
+        }
+
         document.getElementById('audio-player').addEventListener('click', (e) => {
             e.stopPropagation(); 
             initAudio(); 
 
             if (!window.isPlaying) { 
                 if (currentTrackIndex === -1) {
-                    currentTrackIndex = Math.floor(Math.random() * playlist.length);
+                    currentTrackIndex = getRandomTrack();
                     audio.src = playlist[currentTrackIndex];
+                    console.log("▶️ Đang phát nhạc bài: " + playlist[currentTrackIndex]); // In ra console để theo dõi
                 }
 
                 audio.volume = 1; 
@@ -1125,7 +1105,7 @@
                     visualizer.classList.add('playing');
                 }).catch(err => {
                     console.error("Lỗi phát nhạc:", err);
-                    alert("Trình duyệt chặn không cho tự phát nhạc hoặc file mp3 bị lỗi!");
+                    alert("Lỗi phát nhạc! Trình duyệt chặn tự động phát hoặc file '" + playlist[currentTrackIndex] + "' không tồn tại, vui lòng kiểm tra lại.");
                 });
             } 
             else { 
@@ -1138,8 +1118,9 @@
         });
 
         audio.addEventListener('ended', () => { 
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            currentTrackIndex = getRandomTrack(); // Luôn chuyển sang bài khác khi hết bài
             audio.src = playlist[currentTrackIndex];
+            console.log("⏭️ Chuyển sang bài: " + playlist[currentTrackIndex]); // In ra console
             
             audio.play().catch(err => {
                 console.error("Lỗi tự động chuyển bài:", err);
